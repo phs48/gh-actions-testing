@@ -1,7 +1,7 @@
 {
   "pull_request": {
     "head": {
-      "ref": "release/1.0"
+      "ref": "feature/foobar"
     },
     "base": {
       "ref": "master"

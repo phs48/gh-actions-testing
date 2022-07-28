@@ -19,7 +19,7 @@ jobs:
           body-includes: "**Target branch check**"
 
       - name: Create unsafe merge comment
-        if: ${{ !startsWith(github.head_ref, 'release/') || !startsWith(github.head_ref, 'hotfix/') }}
+        if: ${{ !startsWith(github.head_ref, 'release/') && !startsWith(github.head_ref, 'hotfix/') }}
         uses: peter-evans/create-or-update-comment@v2
         with:
           comment-id: ${{ steps.target_branch_check.outputs.comment-id }}
@@ -30,7 +30,7 @@ jobs:
           edit-mode: replace
 
       - name: Report action failure
-        if: ${{ !startsWith(github.head_ref, 'release/') || !startsWith(github.head_ref, 'hotfix/') }}
+        if: ${{ !startsWith(github.head_ref, 'release/') && !startsWith(github.head_ref, 'hotfix/') }}
         uses: actions/github-script@v3
         with:
           script: |
