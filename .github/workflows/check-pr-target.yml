@@ -1,0 +1,55 @@
+name: Check merge target
+on:
+  pull_request:
+    branches:
+      - "main"
+      - "master"
+jobs:
+  if_unsafe_merge:
+    if: ${{ !startsWith(github.head_ref, 'release/') || !startsWith(github.head_ref, 'hotfix/') }}
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - run: echo "::error titleNon-release branch pointed to master::This branch is set to merge into ${{ github.base_ref }}, but is not a release or hotfix branch. Please make sure that this code is intended for a production deploy before merging."
+
+      - name: Find comment
+        uses: peter-evans/find-comment@v2
+        id: target_branch_check
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: "github-actions[bot]"
+          body-includes: "**Target branch check**"
+
+      - name: Create or update comment
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          comment-id: ${{ steps.target_branch_check.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            **Target branch check**
+            ⚠️ This branch is set to merge into ${{ github.base_ref }}, but is not a release or hotfix branch. Please make sure that this code is intended for a production deploy before merging.
+          edit-mode: replace
+  if_safe_merge:
+    if: ${{ steps.fc.outputs.comment-id != '' && startsWith(github.head_ref, 'release/') || startsWith(github.head_ref, 'hotfix/') }}
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Find comment
+        uses: peter-evans/find-comment@v2
+        id: target_branch_check
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: "github-actions[bot]"
+          body-includes: "**Target branch check**"
+
+      - name: Create or update comment
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          comment-id: ${{ steps.target_branch_check.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            **Target branch check**
+            ✅ This branch is no longer pointing to production.
+          edit-mode: replace
