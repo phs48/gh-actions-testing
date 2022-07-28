@@ -9,7 +9,7 @@ jobs:
     if: ${{ !startsWith(github.head_ref, 'release/') || !startsWith(github.head_ref, 'hotfix/') }}
     runs-on: ubuntu-latest
     permissions:
-      issues: write
+      pull-requests: write
     steps:
       - run: echo "::error titleNon-release branch pointed to master::This branch is set to merge into ${{ github.base_ref }}, but is not a release or hotfix branch. Please make sure that this code is intended for a production deploy before merging."
 
@@ -34,7 +34,7 @@ jobs:
     if: ${{ startsWith(github.head_ref, 'release/') || startsWith(github.head_ref, 'hotfix/') }}
     runs-on: ubuntu-latest
     permissions:
-      issues: write
+      pull-requests: write
     steps:
       - name: Find comment
         uses: peter-evans/find-comment@v2
