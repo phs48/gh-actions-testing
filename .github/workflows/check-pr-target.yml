@@ -1,16 +1,17 @@
 name: Check merge target
 on:
   pull_request:
-    branches:
-      - "main"
-      - "master"
+    types:
+      - opened
+      - edited
+      - reopened
 jobs:
   check_safe_merge:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
     steps:
-      - name: Find comment
+      - name: Check for existing unsafe merge comment
         uses: peter-evans/find-comment@v2
         id: target_branch_check
         with:
@@ -18,8 +19,8 @@ jobs:
           comment-author: "github-actions[bot]"
           body-includes: "**Target branch check**"
 
-      - name: Create unsafe merge comment
-        if: ${{ !startsWith(github.head_ref, 'release/') && !startsWith(github.head_ref, 'hotfix/') }}
+      - name: Create unsafe merge comment if needed
+        if: (contains(github.base_ref, 'main') || contains(github.base_ref, 'master')) && !startsWith(github.head_ref, 'release/') && !startsWith(github.head_ref, 'hotfix/')
         uses: peter-evans/create-or-update-comment@v2
         with:
           comment-id: ${{ steps.target_branch_check.outputs.comment-id }}
@@ -30,14 +31,14 @@ jobs:
           edit-mode: replace
 
       - name: Report action failure
-        if: ${{ !startsWith(github.head_ref, 'release/') && !startsWith(github.head_ref, 'hotfix/') }}
+        if: (contains(github.base_ref, 'main') || contains(github.base_ref, 'master')) && !startsWith(github.head_ref, 'release/') && !startsWith(github.head_ref, 'hotfix/')
         uses: actions/github-script@v3
         with:
           script: |
             core.setFailed('The branch pointing to master is not a release or hotfix branch.')
 
       - name: Resolve unsafe merge comment
-        if: ${{ steps.fc.outputs.comment-id != '' && (startsWith(github.head_ref, 'release/') || startsWith(github.head_ref, 'hotfix/')) }}
+        if: steps.fc.outputs.comment-id != '' && (startsWith(github.head_ref, 'release/') || startsWith(github.head_ref, 'hotfix/'))
         uses: peter-evans/create-or-update-comment@v2
         with:
           comment-id: ${{ steps.target_branch_check.outputs.comment-id }}
