@@ -5,13 +5,12 @@ on:
       - "main"
       - "master"
 jobs:
-  if_unsafe_merge:
-    if: ${{ !startsWith(github.head_ref, 'release/') || !startsWith(github.head_ref, 'hotfix/') }}
+  check_safe_merge:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
     steps:
-      - run: echo "::error titleNon-release branch pointed to master::This branch is set to merge into ${{ github.base_ref }}, but is not a release or hotfix branch. Please make sure that this code is intended for a production deploy before merging."
+      - if: ${{ !startsWith(github.head_ref, 'release/') || !startsWith(github.head_ref, 'hotfix/') }}
 
       - name: Find comment
         uses: peter-evans/find-comment@v2
@@ -21,7 +20,8 @@ jobs:
           comment-author: "github-actions[bot]"
           body-includes: "**Target branch check**"
 
-      - name: Create or update comment
+      - name: Create unsafe merge comment
+        if: ${{ !startsWith(github.head_ref, 'release/') || !startsWith(github.head_ref, 'hotfix/') }}
         uses: peter-evans/create-or-update-comment@v2
         with:
           comment-id: ${{ steps.target_branch_check.outputs.comment-id }}
@@ -30,22 +30,16 @@ jobs:
             **Target branch check**
             ⚠️ This branch is set to merge into ${{ github.base_ref }}, but is not a release or hotfix branch. Please make sure that this code is intended for a production deploy before merging.
           edit-mode: replace
-  if_safe_merge:
-    if: ${{ startsWith(github.head_ref, 'release/') || startsWith(github.head_ref, 'hotfix/') }}
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-    steps:
-      - name: Find comment
-        uses: peter-evans/find-comment@v2
-        id: target_branch_check
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          comment-author: "github-actions[bot]"
-          body-includes: "**Target branch check**"
 
-      - name: Update comment
-        if: steps.fc.outputs.comment-id != ''
+      - name: Report action failure
+        if: ${{ !startsWith(github.head_ref, 'release/') || !startsWith(github.head_ref, 'hotfix/') }}
+        uses: actions/github-script@v3
+        with:
+          script: |
+              core.setFailed('The branch pointing to master is not a release or hotfix branch.')
+
+      - name: Resolve unsafe merge comment
+        if: ${{ success() && steps.fc.outputs.comment-id != '' && !startsWith(github.head_ref, 'release/') || !startsWith(github.head_ref, 'hotfix/') }}
         uses: peter-evans/create-or-update-comment@v2
         with:
           comment-id: ${{ steps.target_branch_check.outputs.comment-id }}
