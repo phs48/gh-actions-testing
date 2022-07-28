@@ -31,7 +31,7 @@ jobs:
             ⚠️ This branch is set to merge into ${{ github.base_ref }}, but is not a release or hotfix branch. Please make sure that this code is intended for a production deploy before merging.
           edit-mode: replace
   if_safe_merge:
-    if: ${{ steps.fc.outputs.comment-id != '' && startsWith(github.head_ref, 'release/') || startsWith(github.head_ref, 'hotfix/') }}
+    if: ${{ startsWith(github.head_ref, 'release/') || startsWith(github.head_ref, 'hotfix/') }}
     runs-on: ubuntu-latest
     permissions:
       issues: write
@@ -44,7 +44,8 @@ jobs:
           comment-author: "github-actions[bot]"
           body-includes: "**Target branch check**"
 
-      - name: Create or update comment
+      - name: Update comment
+        if: steps.fc.outputs.comment-id != ''
         uses: peter-evans/create-or-update-comment@v2
         with:
           comment-id: ${{ steps.target_branch_check.outputs.comment-id }}
