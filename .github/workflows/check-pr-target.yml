@@ -10,8 +10,6 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - if: ${{ !startsWith(github.head_ref, 'release/') || !startsWith(github.head_ref, 'hotfix/') }}
-
       - name: Find comment
         uses: peter-evans/find-comment@v2
         id: target_branch_check
@@ -36,7 +34,7 @@ jobs:
         uses: actions/github-script@v3
         with:
           script: |
-              core.setFailed('The branch pointing to master is not a release or hotfix branch.')
+            core.setFailed('The branch pointing to master is not a release or hotfix branch.')
 
       - name: Resolve unsafe merge comment
         if: ${{ success() && steps.fc.outputs.comment-id != '' && !startsWith(github.head_ref, 'release/') || !startsWith(github.head_ref, 'hotfix/') }}
