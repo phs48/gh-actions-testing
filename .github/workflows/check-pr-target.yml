@@ -4,9 +4,8 @@ on:
     types:
       - opened
       - edited
-      - reopened
 jobs:
-  check_safe_merge:
+  check_unsafe_merge:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -19,7 +18,7 @@ jobs:
           comment-author: "github-actions[bot]"
           body-includes: "## Target branch check"
 
-      - name: Create unsafe merge comment if needed
+      - name: Create or update unsafe merge comment if needed
         if: (contains(github.base_ref, 'main') || contains(github.base_ref, 'master')) && !startsWith(github.head_ref, 'release/') && !startsWith(github.head_ref, 'hotfix/')
         uses: peter-evans/create-or-update-comment@v2
         with:
@@ -31,7 +30,7 @@ jobs:
             ⚠️ This branch is set to merge into ${{ github.base_ref }}, but is not a release or hotfix branch. Please make sure that this code is intended for a production deploy before merging.
           edit-mode: replace
 
-      - name: Resolve unsafe merge comment
+      - name: Check for existing unsafe merge comments and resolve
         if: steps.target_branch_check.outputs.comment-id != '' && (!(contains(github.base_ref, 'main') && !contains(github.base_ref, 'master')))
         uses: peter-evans/create-or-update-comment@v2
         with:
