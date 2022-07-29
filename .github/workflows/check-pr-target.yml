@@ -31,15 +31,8 @@ jobs:
             ⚠️ This branch is set to merge into ${{ github.base_ref }}, but is not a release or hotfix branch. Please make sure that this code is intended for a production deploy before merging.
           edit-mode: replace
 
-      - name: Report action failure
-        if: (contains(github.base_ref, 'main') || contains(github.base_ref, 'master')) && !startsWith(github.head_ref, 'release/') && !startsWith(github.head_ref, 'hotfix/')
-        uses: actions/github-script@v3
-        with:
-          script: |
-            core.setFailed('The branch pointing to master is not a release or hotfix branch.')
-
       - name: Resolve unsafe merge comment
-        if: steps.target_branch_check.outputs.comment-id != '' && (startsWith(github.head_ref, 'release/') || startsWith(github.head_ref, 'hotfix/'))
+        if: steps.target_branch_check.outputs.comment-id != '' && (!(contains(github.base_ref, 'main') && !contains(github.base_ref, 'master')))
         uses: peter-evans/create-or-update-comment@v2
         with:
           comment-id: ${{ steps.target_branch_check.outputs.comment-id }}
