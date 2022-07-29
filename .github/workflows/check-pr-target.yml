@@ -4,9 +4,8 @@ on:
     types:
       - opened
       - edited
-      - reopened
 jobs:
-  check_safe_merge:
+  check_unsafe_merge:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -17,33 +16,28 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: "github-actions[bot]"
-          body-includes: "**Target branch check**"
+          body-includes: "## Target branch check"
 
-      - name: Create unsafe merge comment if needed
+      - name: Create or update unsafe merge comment if needed
         if: (contains(github.base_ref, 'main') || contains(github.base_ref, 'master')) && !startsWith(github.head_ref, 'release/') && !startsWith(github.head_ref, 'hotfix/')
         uses: peter-evans/create-or-update-comment@v2
         with:
           comment-id: ${{ steps.target_branch_check.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            **Target branch check**
+            ## Target branch check
+
             ⚠️ This branch is set to merge into ${{ github.base_ref }}, but is not a release or hotfix branch. Please make sure that this code is intended for a production deploy before merging.
           edit-mode: replace
 
-      - name: Report action failure
-        if: (contains(github.base_ref, 'main') || contains(github.base_ref, 'master')) && !startsWith(github.head_ref, 'release/') && !startsWith(github.head_ref, 'hotfix/')
-        uses: actions/github-script@v3
-        with:
-          script: |
-            core.setFailed('The branch pointing to master is not a release or hotfix branch.')
-
-      - name: Resolve unsafe merge comment
-        if: steps.fc.outputs.comment-id != '' && (startsWith(github.head_ref, 'release/') || startsWith(github.head_ref, 'hotfix/'))
+      - name: Check for existing unsafe merge comments and resolve
+        if: steps.target_branch_check.outputs.comment-id != '' && (!(contains(github.base_ref, 'main') && !contains(github.base_ref, 'master')))
         uses: peter-evans/create-or-update-comment@v2
         with:
           comment-id: ${{ steps.target_branch_check.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            **Target branch check**
+            ## Target branch check
+
             ✅ This branch is no longer pointing to production.
           edit-mode: replace
