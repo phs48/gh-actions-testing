@@ -25,7 +25,8 @@ jobs:
           comment-id: ${{ steps.target_branch_check.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            **Target branch check**
+            ## Target branch check
+
             ⚠️ This branch is set to merge into ${{ github.base_ref }}, but is not a release or hotfix branch. Please make sure that this code is intended for a production deploy before merging.
           edit-mode: replace
 
@@ -37,12 +38,13 @@ jobs:
             core.setFailed('The branch pointing to master is not a release or hotfix branch.')
 
       - name: Resolve unsafe merge comment
-        if: ${{ steps.fc.outputs.comment-id != '' && (startsWith(github.head_ref, 'release/') || startsWith(github.head_ref, 'hotfix/')) }}
+        if: ${{ steps.target_branch_check.outputs.comment-id != '' && (startsWith(github.head_ref, 'release/') || startsWith(github.head_ref, 'hotfix/')) }}
         uses: peter-evans/create-or-update-comment@v2
         with:
           comment-id: ${{ steps.target_branch_check.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            **Target branch check**
+            ## Target branch check
+
             ✅ This branch is no longer pointing to production.
           edit-mode: replace
